@@ -2,75 +2,29 @@
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
-  schedule:
-    # Executar diariamente as 8h (UTC)
-    - cron: '0 8 * * *'
   workflow_dispatch:
 
 jobs:
   api-tests:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout do repositorio
+      - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Instalar Newman e Reporter
-        run: |
-          npm install -g newman newman-reporter-htmlextra
-
-      - name: Executar testes da API
-        run: |
-          newman run collections/ReqRes_API_Tests.postman_collection.json \
-            -e environments/dev.postman_environment.json \
-            -r cli,htmlextra \
-            --reporter-htmlextra-export newman-reports/report.html \
-            --reporter-htmlextra-title "ReqRes API Tests Report" \
-            --reporter-htmlextra-browserTitle "API Test Results"
-
-      - name: Executar testes data-driven
-        if: success()
-        run: |
-          newman run collections/ReqRes_API_Tests.postman_collection.json \
-            -e environments/dev.postman_environment.json \
-            -d test-data/users.csv \
-            --folder "01 - Happy Path" \
-            -r cli,htmlextra \
-            --reporter-htmlextra-export newman-reports/report-data-driven.html \
-            --reporter-htmlextra-title "ReqRes Data-Driven Tests"
-
-      - name: Upload dos relatorios como artifact
+      - name: Instalar Newman
+        run: npm install -g newman newman-reporter-htmlextra
+      - name: Executar testes Open Library
+        run: newman run collections/OpenLibrary_API_Tests.postman_collection.json -e environments/openlibrary.postman_environment.json -r cli,htmlextra --reporter-htmlextra-export newman-reports/report.html
+      - name: Upload relatorios
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: newman-reports
           path: newman-reports/
           retention-days: 30
-
-      - name: Publicar resultado no PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let body = '## Resultado dos Testes de API\n\n';
-            body += '| Metrica | Valor |\n|---------|-------|\n';
-            body += '| Status | ${{ job.status }} |\n';
-            body += '| Runner | Newman CLI |\n';
-            body += '| API | ReqRes (https://reqres.in) |\n\n';
-            body += '> Relatorios HTML disponiveis nos artifacts do workflow.';
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
