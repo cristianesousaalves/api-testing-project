@@ -1,0 +1,724 @@
+{
+  "info": {
+    "name": "Open Library API Tests",
+    "_postman_id": "open-library-tests-001",
+    "description": "Suite de testes para a API Open Library (https://openlibrary.org). Cobre busca de livros, autores, capas e ISBN.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://openlibrary.org",
+      "type": "string"
+    },
+    {
+      "key": "bookKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "authorKey",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Happy Path",
+      "description": "Fluxos positivos - buscas que retornam resultados validos",
+      "item": [
+        {
+          "name": "GET - Buscar Livro por Titulo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search.json?q=the+lord+of+the+rings&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "the+lord+of+the+rings"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response time menor que 5000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar resultados de busca', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('docs');",
+                  "    pm.expect(json.docs).to.be.an('array');",
+                  "    pm.expect(json.docs.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Cada livro deve ter titulo e autor', function () {",
+                  "    const json = pm.response.json();",
+                  "    json.docs.forEach(function(book) {",
+                  "        pm.expect(book).to.have.property('title');",
+                  "        pm.expect(book).to.have.property('author_name');",
+                  "    });",
+                  "});",
+                  "",
+                  "// Salvar key do primeiro livro",
+                  "const json = pm.response.json();",
+                  "if (json.docs && json.docs.length > 0 && json.docs[0].key) {",
+                  "    pm.collectionVariables.set('bookKey', json.docs[0].key);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Buscar Livro por ISBN",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/isbn/9780140328721.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "isbn",
+                "9780140328721.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar dados do livro', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('title');",
+                  "});",
+                  "",
+                  "pm.test('Titulo deve ser uma string nao vazia', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.title).to.be.a('string');",
+                  "    pm.expect(json.title.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Buscar Autor por Nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search/authors.json?q=j.k.+rowling&limit=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search",
+                "authors.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "j.k.+rowling"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar lista de autores', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('docs');",
+                  "    pm.expect(json.docs).to.be.an('array');",
+                  "    pm.expect(json.docs.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Primeiro resultado deve ser J.K. Rowling', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.docs[0].name.toLowerCase()).to.include('rowling');",
+                  "});",
+                  "",
+                  "// Salvar key do autor",
+                  "const json = pm.response.json();",
+                  "if (json.docs && json.docs.length > 0) {",
+                  "    pm.collectionVariables.set('authorKey', json.docs[0].key);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Detalhes do Autor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/authors/OL23919A.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authors",
+                "OL23919A.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar dados do autor', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('name');",
+                  "    pm.expect(json).to.have.property('birth_date');",
+                  "});",
+                  "",
+                  "pm.test('Nome deve ser J. K. Rowling', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.name.toLowerCase()).to.include('rowling');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Obras de um Autor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/authors/OL23919A/works.json?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authors",
+                "OL23919A",
+                "works.json"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar lista de obras', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('entries');",
+                  "    pm.expect(json.entries).to.be.an('array');",
+                  "    pm.expect(json.entries.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Cada obra deve ter titulo', function () {",
+                  "    const json = pm.response.json();",
+                  "    json.entries.forEach(function(work) {",
+                  "        pm.expect(work).to.have.property('title');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Capa do Livro por ISBN",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://covers.openlibrary.org/b/isbn/9780140328721-M.jpg",
+              "host": [
+                "https://covers.openlibrary.org"
+              ],
+              "path": [
+                "b",
+                "isbn",
+                "9780140328721-M.jpg"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type deve ser imagem', function () {",
+                  "    const contentType = pm.response.headers.get('Content-Type');",
+                  "    pm.expect(contentType).to.include('image');",
+                  "});",
+                  "",
+                  "pm.test('Resposta deve ter conteudo (nao vazio)', function () {",
+                  "    pm.expect(pm.response.responseSize).to.be.above(1000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Buscar por Assunto (Ficcion Cientifica)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/science_fiction.json?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subjects",
+                "science_fiction.json"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar nome do assunto', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('name');",
+                  "    pm.expect(json.name.toLowerCase()).to.include('science fiction');",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar lista de obras do assunto', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('works');",
+                  "    pm.expect(json.works).to.be.an('array');",
+                  "    pm.expect(json.works.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Edge Cases",
+      "description": "Casos de borda - buscas com resultados variados",
+      "item": [
+        {
+          "name": "GET - Buscar Livro com Titulo Longo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search.json?q=a+very+long+search+query+that+probably+returns+few+results&limit=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "a+very+long+search+query+that+probably+returns+few+results"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200 (mesmo sem resultados)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve ter propriedade numFound', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('numFound');",
+                  "    pm.expect(json.numFound).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Buscar com Caracteres Especiais",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search.json?q=caf%C3%A9&limit=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "caf%C3%A9"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('API deve aceitar caracteres especiais sem erro', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('docs');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Buscar Livro com Limit 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search.json?q=harry+potter&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "harry+potter"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar exatamente 1 resultado', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.docs.length).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Resultado deve conter Harry Potter', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.docs[0].title.toLowerCase()).to.include('harry potter');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Buscar Livros Recentes (por ano)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search.json?q=python+programming&sort=new&limit=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "python+programming"
+                },
+                {
+                  "key": "sort",
+                  "value": "new"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Deve retornar resultados', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.docs.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Negative Tests",
+      "description": "Testes negativos - recursos inexistentes e parametros invalidos",
+      "item": [
+        {
+          "name": "GET - Livro com ISBN Inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/isbn/0000000000000.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "isbn",
+                "0000000000000.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 404 (Not Found)', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Autor Inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/authors/OL99999999A.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authors",
+                "OL99999999A.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 404 (Not Found)', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Endpoint Invalido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/naoexiste.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "naoexiste.json"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 404 ou 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Busca Vazia (sem termo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search.json?q=&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search.json"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code deve ser 200 (API nao quebra)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('numFound deve ser 0 ou API retorna resposta valida', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('numFound');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET - Capa de ISBN Inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://covers.openlibrary.org/b/isbn/0000000000000-M.jpg",
+              "host": [
+                "https://covers.openlibrary.org"
+              ],
+              "path": [
+                "b",
+                "isbn",
+                "0000000000000-M.jpg"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Deve retornar uma resposta (200 ou 302)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
