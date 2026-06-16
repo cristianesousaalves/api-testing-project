@@ -87,6 +87,13 @@ newman run collections/OpenLibrary_API_Tests.postman_collection.json -e environm
 
 Cristiane Sousa Alves - Estudo pratico de API Testing
 
+## Evidencias
+
+- **Relatorio HTML**: disponivel em evidencias/relatorio.html e nos artifacts do GitHub Actions
+- **Relatorio JSON**: disponivel em evidencias/relatorio.json
+- **Video de execucao**: disponivel localmente (arquivo Evidencia do teste.mp4, 221 MB - nao versionado por exceder o limite do GitHub)
+
 ## Licenca
 
 MIT
+
