@@ -1,0 +1,16 @@
+﻿{
+  "name": "api-testing-project",
+  "version": "1.0.0",
+  "description": "Projeto pratico de testes de API com Postman e Newman - Open Library",
+  "scripts": {
+    "test": "newman run collections/OpenLibrary_API_Tests.postman_collection.json -e environments/openlibrary.postman_environment.json",
+    "test:report": "newman run collections/OpenLibrary_API_Tests.postman_collection.json -e environments/openlibrary.postman_environment.json -r htmlextra --reporter-htmlextra-export evidencias/relatorio.html",
+    "test:json": "newman run collections/OpenLibrary_API_Tests.postman_collection.json -e environments/openlibrary.postman_environment.json -r json --reporter-json-export evidencias/relatorio.json"
+  },
+  "author": "Cristiane Sousa Alves",
+  "license": "MIT",
+  "devDependencies": {
+    "newman": "^6.2.2",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
