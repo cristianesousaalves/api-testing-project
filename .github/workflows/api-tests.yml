@@ -20,7 +20,7 @@ jobs:
       - name: Instalar Newman
         run: npm install -g newman newman-reporter-htmlextra
       - name: Executar testes Open Library
-        run: newman run collections/OpenLibrary_API_Tests.postman_collection.json -e environments/openlibrary.postman_environment.json -r cli,htmlextra --reporter-htmlextra-export newman-reports/report.html
+        run: newman run collection/OpenLibrary_API_Tests.postman_collection.json -e environments/openlibrary.postman_environment.json -r cli,htmlextra --reporter-htmlextra-export newman-reports/report.html
       - name: Upload relatorios
         if: always()
         uses: actions/upload-artifact@v4
